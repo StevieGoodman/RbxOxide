@@ -101,11 +101,19 @@ end
     Unsafely unwraps the value inside the `Option`.  
     Good for debugging and testing. Do not use in production, instead use `:Match()` or `:UnwrapOr()`.
 
+   ```lua
+    local someValue = Option.new(7878)
+    local noneValue = Option.None
+
+    print(someValue:Unwrap()) -- 7878
+    print(noneValue:Unwrap()) -- ERROR: ":Unwrap() may not be called on Option.None objects"
+    ```
+
     @error ":Unwrap() may not be called on Option.None objects"
 ]=]--
-function Option:Unwrap(): any
+function Option:Unwrap(msg: string?): any
     warn(":Unwrap() should only be used for debugging purposes. For production, instead use :Match()")
-    assert(self:IsSome(), ":Unwrap() may not be called on Option.None objects")
+    assert(self:IsSome(), msg or ":Unwrap() may not be called on Option.None objects")
     return self._value
 end
 
