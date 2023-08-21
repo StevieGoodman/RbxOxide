@@ -28,7 +28,7 @@ end
     @within Option
     @prop None Option<None>
 ]=]--
-Option.None = Option.new()
+Option.none = Option.new()
 
 --[=[
     @within Option
@@ -39,7 +39,7 @@ Option.None = Option.new()
 
     @error "Provided nil type" -- Cannot create `Option<Some>` from a `nil` value
 ]=]--
-function Option.Some(value: any)
+function Option.some(value: any)
     assert(value ~= nil, "Provided nil type")
     return Option.new(value)
 end
@@ -50,8 +50,8 @@ end
 
     Returns `true` if the object is of type `None`.
 ]=]--
-function Option:IsNone(): boolean
-    return self == Option.None
+function Option:isNone(): boolean
+    return self == Option.none
 end
 
 --[=[
@@ -60,8 +60,8 @@ end
 
     Returns `true` if the object is of type `Some<T>`
 ]=]--
-function Option:IsSome(): boolean
-    return not self:IsNone()
+function Option:isSome(): boolean
+    return not self:isNone()
 end
 
 --[=[
@@ -75,22 +75,22 @@ end
 
     ```lua
     local someValue = Option.new(7878)
-    local noneValue = Option.None
+    local noneValue = Option.none
 
     local cases = {
         Some = function(value) return value end,
         None = function() return "Empty!" end
     }
 
-    print(someValue:Match(cases)) -- 7878
-    print(noneValue:Match(cases)) -- "Empty!"
+    print(someValue:match(cases)) -- 7878
+    print(noneValue:match(cases)) -- "Empty!"
     ```
 ]=]--
-function Option:Match(cases: { Some: (any)->(any), None: ()->(any) }): any
-    if self:IsSome() then
-        return cases.Some(self._value)
-    elseif self:IsNone() then
-        return cases.None()
+function Option:match(cases: { some: (any)->(any), none: ()->(any) }): any
+    if self:isSome() then
+        return cases.some(self._value)
+    elseif self:isNone() then
+        return cases.none()
     end
 end
 
@@ -99,65 +99,65 @@ end
     @return any
 
     Unsafely unwraps the value inside the `Option`.  
-    Good for debugging and testing. Do not use in production, instead use `:Match()` or `:UnwrapOr()`.
+    Good for debugging and testing. Do not use in production, instead use `:match()` or `:unwrapOr()`.
 
    ```lua
     local someValue = Option.new(7878)
-    local noneValue = Option.None
+    local noneValue = Option.none
 
-    print(someValue:Unwrap()) -- 7878
-    print(noneValue:Unwrap()) -- ERROR: ":Unwrap() may not be called on Option.None objects"
+    print(someValue:unwrap()) -- 7878
+    print(noneValue:unwrap()) -- ERROR: ":unwrap() may not be called on Option.none objects"
     ```
 
-    @error ":Unwrap() may not be called on Option.None objects"
+    @error ":unwrap() may not be called on Option.none objects"
 ]=]--
-function Option:Unwrap(msg: string?): any
-    warn(":Unwrap() should only be used for debugging purposes. For production, instead use :Match()")
-    assert(self:IsSome(), msg or ":Unwrap() may not be called on Option.None objects")
+function Option:unwrap(msg: string?): any
+    warn(":unwrap() should only be used for debugging purposes. For production, instead use :match()")
+    assert(self:isSome(), msg or ":unwrap() may not be called on Option.none objects")
     return self._value
 end
 
 --[=[
     @within Option
-    @param default any -- Returned if `Option:IsNone()`
+    @param default any -- Returned if `Option:isNone()`
     @return any
 
-    Safely unwraps the `Option` by returning `default` if `Option:IsNone()`.
+    Safely unwraps the `Option` by returning `default` if `Option:isNone()`.
 
     ```lua
     local someValue = Option.new(7878)
-    local noneValue = Option.None
+    local noneValue = Option.none
 
-    print(someValue:UnwrapOr("Oh no!")) -- 7878
-    print(noneValue:UnwrapOr("...anyway!")) -- "...anyway!"
+    print(someValue:unwrapOr("Oh no!")) -- 7878
+    print(noneValue:unwrapOr("...anyway!")) -- "...anyway!"
     ```
 ]=]--
-function Option:UnwrapOr(default: any): any
-    return self:Match {
-        Some = function(value) return value end,
-        None = function() return default end
+function Option:unwrapOr(default: any): any
+    return self:match {
+        some = function(value) return value end,
+        none = function() return default end,
     }
 end
 
 --[=[
     @within Option
-    @param defaultFn any -- Returned if `Option:IsNone()`
+    @param defaultFn any -- Returned if `Option:isNone()`
     @return any
 
-    Safely unwraps the `Option` by returning the result of `defaultFn` if `Option:IsNone()`.
+    Safely unwraps the `Option` by returning the result of `defaultFn` if `Option:isNone()`.
 
     ```lua
     local someValue = Option.new(7878)
-    local noneValue = Option.None
+    local noneValue = Option.none
 
-    print(someValue:UnwrapOrElse(function() return "Oh no!" end)) -- 7878
-    print(noneValue:UnwrapOrElse(function() return "...anyway!" end)) -- "...anyway!"
+    print(someValue:unwrapOrElse(function() return "Oh no!" end)) -- 7878
+    print(noneValue:unwrapOrElse(function() return "...anyway!" end)) -- "...anyway!"
     ```
 ]=]--
-function Option:UnwrapOrElse(defaultFn: ()->(any)): any
-    return self:Match {
-        Some = function(value) return value end,
-        None = function() return defaultFn() end
+function Option:unwrapOrElse(defaultFn: ()->(any)): any
+    return self:match {
+        some = function(value) return value end,
+        none = function() return defaultFn() end
     }
 end
 
