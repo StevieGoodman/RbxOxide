@@ -2,6 +2,22 @@
     "name": "Oxide",
 
     "tree": {
-        "$className": "DataModel"
+        "$className": "DataModel",
+
+        "ReplicatedStorage": {
+            "$className": "ReplicatedStorage",
+
+            "Modules": {
+                "$className": "Folder",
+
+                "Oxide": {
+                    "$path": "src/Oxide.luau",
+
+                    "Option": {
+                        "$path": "src/Submodules/Option.luau"
+                    }
+                }
+            }
+        }
     }
 }
