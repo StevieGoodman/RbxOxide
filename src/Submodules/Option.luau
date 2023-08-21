@@ -17,6 +17,11 @@ Option.__index = Option
     @return Option -- `Option` object
 
     Creates an `Option` object from a value.
+
+     ```lua
+    local someValue = Option.new(7878) -- Option<Some>
+    local noneValue = Option.new(nil)  -- Option<None>
+    ```
 ]=]--
 function Option.new(value: any)
     local optionObject = { _value = value }
@@ -35,7 +40,13 @@ Option.none = Option.new()
     @param value T -- Non-nil value to wrap as an Option<Some>
     @return Option<Some>
 
-    Creates a `Option` object from a non-`nil` value.
+    Creates a `Option` object from a non-`nil` value.  
+    Because it throws an error, it's usage is discouraged in favour on `Option.new()`.
+
+    ```lua
+    local someValue = Option.some(7878) -- Option<Some>
+    local noneValue = Option.some(nil)  -- ERROR: "Provided nil type"
+    ```
 
     @error "Provided nil type" -- Cannot create `Option<Some>` from a `nil` value
 ]=]--
@@ -46,9 +57,38 @@ end
 
 --[=[
     @within Option
+    @param obj Option -- Option object to check the type of
     @return boolean
 
-    Returns `true` if the object is of type `None`.
+    Returns whether or not `obj` is a valid `Option` object
+    
+    ```lua
+    local someValue = Option.new(7878)
+    local noneValue = Option.none()
+    local stringValue = "Hello, world!"
+
+    print(Option.is(someValue))   -- true
+    print(Option.is(noneValue))   -- true
+    print(Option.is(stringValue)) -- false
+    ```
+]=]--
+function Option.is(obj: table): boolean
+    return typeof(obj) == "table" and getmetatable(obj) == Option
+end
+
+--[=[
+    @within Option
+    @return boolean
+
+    Returns `true` if the object is of type `Option<None>`.
+
+    ```lua
+    local someValue = Option.new(7878)
+    local noneValue = Option.none()
+
+    print(someValue:isNone()) -- false
+    print(noneValue:isNone()) -- true
+    ```
 ]=]--
 function Option:isNone(): boolean
     return self == Option.none
@@ -58,7 +98,15 @@ end
     @within Option
     @return boolean
 
-    Returns `true` if the object is of type `Some<T>`
+    Returns `true` if calling object is of type `Option<Some>`.
+
+    ```lua
+    local someValue = Option.new(7878)
+    local noneValue = Option.none()
+
+    print(someValue:isSome()) -- true
+    print(noneValue:isSome()) -- false
+    ```
 ]=]--
 function Option:isSome(): boolean
     return not self:isNone()
@@ -88,11 +136,25 @@ end
 ]=]--
 function Option:match(cases: { some: (any)->(any), none: ()->(any) }): any
     if self:isSome() then
-        return cases.some(self._value)
+        return cases.some(self:_unwrap())
     elseif self:isNone() then
         return cases.none()
     end
 end
+
+--[=[
+    @within Option
+    @private
+
+    Used internally to unwrap `Option` objects unsafely without raising a warning.  
+    Its usage is discouraged.
+
+]=]--
+function Option:_unwrap(msg: string?): any
+    assert(self:isSome(), msg or ":unwrap() may not be called on Option.none objects")
+    return self._value
+end
+
 
 --[=[
     @within Option
@@ -101,21 +163,20 @@ end
     Unsafely unwraps the value inside the `Option`.  
     Good for debugging and testing. Do not use in production, instead use `:match()` or `:unwrapOr()`.
 
-   ```lua
+    ```lua
     local someValue = Option.new(7878)
     local noneValue = Option.none
 
     print(someValue:unwrap()) -- 7878
     print(noneValue:unwrap()) -- ERROR: ":unwrap() may not be called on Option.none objects"
     ```
-
     @error ":unwrap() may not be called on Option.none objects"
 ]=]--
 function Option:unwrap(msg: string?): any
     warn(":unwrap() should only be used for debugging purposes. For production, instead use :match()")
-    assert(self:isSome(), msg or ":unwrap() may not be called on Option.none objects")
-    return self._value
+    return self:_unwrap(msg)
 end
+
 
 --[=[
     @within Option
@@ -141,7 +202,7 @@ end
 
 --[=[
     @within Option
-    @param defaultFn any -- Returned if `Option:isNone()`
+    @param defaultFn any -- Returned if caller `Option:isNone()`
     @return any
 
     Safely unwraps the `Option` by returning the result of `defaultFn` if `Option:isNone()`.
@@ -159,6 +220,99 @@ function Option:unwrapOrElse(defaultFn: ()->(any)): any
         some = function(value) return value end,
         none = function() return defaultFn() end
     }
+end
+
+--[=[
+    @within Option
+    @param value any -- Value to check for inside the calling `Option` object
+    @return boolean
+
+    Returns if the value inside the calling `Option` object matches `value`.
+
+    ```lua
+    local someValue = Option.new(7878)
+    local noneValue = Option.none()
+
+    print(someValue:contains(7878))     -- true
+    print(someValue:contains("Hello"))  -- false
+    print(noneValue:contains("World!")) -- false
+    ```
+]=]--
+function Option:contains(value: any): boolean
+    return self:isSome() and self:_unwrap() == value
+end
+
+--[=[
+    @within Option
+    @param other any -- Other `Option` object for the calling object to be compared against
+    @return Option<Some> | Option<None>
+
+    Returns `other` if the calling option has a value, otherwise returns `Option<None>`.
+
+    ```lua
+    local someValueA = Option.new(7878)
+    local someValueB = Option.new("I love Rust!")
+    local noneValue = Option.none()
+
+    print(someValueA:And(someValueB)) -- Option<Some> (someValueB)
+    print(someValueA:And(noneValue))  -- Option<None>
+    print(noneValue:And(someValueB))  -- Option<None>
+    print(noneValue:And(noneValue))   -- Option<None>
+    ```
+]=]--
+function Option:And(other: any): any
+    return if self:isSome() and other:isSome() then other else Option.none
+end
+
+--[=[
+    @within Option
+    @param other any -- Other `Option` object for the calling object to be compared against
+
+    If caller has a value, returns itself. Otherwise, returns `other`.
+
+    ```lua
+    local someValueA = Option.new(7878)
+    local someValueB = Option.new("I love Rust!")
+    local noneValue = Option.none()
+
+    print(someValueA:And(someValueB)) -- Option<Some> (someValueB)
+    print(someValueA:And(noneValue))  -- Option<Some> (someValueA)
+    print(noneValue:And(someValueB))  -- Option<Some> (someValueB)
+    print(noneValue:And(noneValue))   -- Option<None>
+    ```
+]=]--
+function Option:Or(other: any): any
+    return if self:isSome() then self else other
+end
+
+--[=[
+    @within Option
+    @param other any -- Other `Option` object for the calling object to be compared against
+
+    If both the calling object and `other` have values or both don't have a value, then this returns `Result<None>`.  
+    Otherwise, it returns the `Option` object that does have a value.
+
+    ```lua
+    local someValueA = Option.new(7878)
+    local someValueB = Option.new("I love Rust!")
+    local noneValue = Option.none()
+
+    print(someValueA:And(someValueB)) -- Option<None>
+    print(someValueA:And(noneValue))  -- Option<Some> (someValueA)
+    print(noneValue:And(someValueB))  -- Option<Some> (someValueB)
+    print(noneValue:And(noneValue))   -- Option<None>
+    ```
+]=]--
+function Option:Xor(other: any): any
+    local optAIsSome = self:isSome()
+    local optBIsSome = other:isSome()
+    if optAIsSome == optBIsSome then
+        return Option.none
+    elseif optAIsSome then
+        return self
+    else
+        return other
+    end
 end
 
 --x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--
