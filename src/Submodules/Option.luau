@@ -5,10 +5,6 @@
     An alternative to the Luau optionals, the `Option` class prevents you from forgetting that an optional
     value may be `nil`.
 ]=]--
---[=[
-    @within Option
-    @prop IsNone bool
-]=]--
 local Option = {}
 
 --x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--
