@@ -315,6 +315,27 @@ function Option:Xor(other: any): any
     end
 end
 
+function Option.__tostring(table)
+    return table:match {
+        some = function(value)
+            return `Option<{typeof(value)}>({value})`
+        end,
+        none = function()
+            return "Option<None>"
+        end,
+    }
+end
+
+function Option.__eq(table, obj)
+    if not Option.is(obj) then return false end
+    if table._value ~= nil and obj._value ~= nil then
+        return table:_unwrap() == obj:_unwrap()
+    elseif table._value == nil and obj._value == nil then
+        return true
+    end
+    return false
+end
+
 --x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--
 
 return Option
