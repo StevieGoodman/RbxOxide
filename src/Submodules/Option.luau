@@ -285,36 +285,6 @@ function Option:Or(other: any): any
     return if self:isSome() then self else other
 end
 
---[=[
-    @within Option
-    @param other any -- Other `Option` object for the calling object to be compared against
-
-    If both the calling object and `other` have values or both don't have a value, then this returns `Result<None>`.  
-    Otherwise, it returns the `Option` object that does have a value.
-
-    ```lua
-    local someValueA = Option.new(7878)
-    local someValueB = Option.new("I love Rust!")
-    local noneValue = Option.none()
-
-    print(someValueA:And(someValueB)) -- Option<None>
-    print(someValueA:And(noneValue))  -- Option<Some> (someValueA)
-    print(noneValue:And(someValueB))  -- Option<Some> (someValueB)
-    print(noneValue:And(noneValue))   -- Option<None>
-    ```
-]=]--
-function Option:Xor(other: any): any
-    local optAIsSome = self:isSome()
-    local optBIsSome = other:isSome()
-    if optAIsSome == optBIsSome then
-        return Option.none
-    elseif optAIsSome then
-        return self
-    else
-        return other
-    end
-end
-
 function Option.__tostring(table)
     return table:match {
         some = function(value)
@@ -324,16 +294,6 @@ function Option.__tostring(table)
             return "Option<None>"
         end,
     }
-end
-
-function Option.__eq(table, obj)
-    if not Option.is(obj) then return false end
-    if table._value ~= nil and obj._value ~= nil then
-        return table:_unwrap() == obj:_unwrap()
-    elseif table._value == nil and obj._value == nil then
-        return true
-    end
-    return false
 end
 
 --x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--x--

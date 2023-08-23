@@ -15,6 +15,9 @@
 
                     "Option": {
                         "$path": "src/Submodules/Option.luau"
+                    },
+                    "Result": {
+                        "$path": "src/Submodules/Result.luau"
                     }
                 }
             }
