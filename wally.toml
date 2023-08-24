@@ -1,5 +1,5 @@
 [package]
-name = "ithaca-the-enby/oxide"
+name = "StevieGoodman/oxide"
 description = "Lua implementation of Rust features & types."
 version = "1.0.0"
 registry = "https://github.com/UpliftGames/wally-index"
