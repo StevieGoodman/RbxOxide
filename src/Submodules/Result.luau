@@ -2,8 +2,8 @@
 
 --[=[
     @class Result
-    An alternative to the Luau optionals, the `Option` class prevents you from forgetting that an optional
-    value may be `nil`.
+    An alternative to Luau error handling, the `Result` class requires you to consider potential errors
+    before accessing the wrapped value.
 ]=]--
 local Result = {}
 
